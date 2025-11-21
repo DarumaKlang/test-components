@@ -7,11 +7,11 @@ import {
 } from '@/lib/grid-calculator';
 import { VariableMap } from '@/data/grid-variables';
 
-const INITIAL_START_R1 = 5;
-const INITIAL_START_R2 = 2;
-const INITIAL_START_R3 = 4;
-const INITIAL_TARGET_VALUE = 3;
-const INITIAL_SLOT_X = 50;
+const INITIAL_START_R1 = 1;
+const INITIAL_START_R2 = 1;
+const INITIAL_START_R3 = 1;
+const INITIAL_TARGET_VALUE = 1;
+const INITIAL_SLOT_X = 12;
 
 export default function TriplexGridFinder() {
 
