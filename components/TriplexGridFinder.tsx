@@ -7,11 +7,11 @@ import {
 } from '@/lib/grid-calculator';
 import { VariableMap } from '@/data/grid-variables';
 
-const INITIAL_START_R1 = 1;
-const INITIAL_START_R2 = 1;
-const INITIAL_START_R3 = 1;
-const INITIAL_TARGET_VALUE = 1;
-const INITIAL_SLOT_X = 12;
+const INITIAL_START_R1 = 5;
+const INITIAL_START_R2 = 2;
+const INITIAL_START_R3 = 4;
+const INITIAL_TARGET_VALUE = 3;
+const INITIAL_SLOT_X = 50;
 
 export default function TriplexGridFinder() {
 
@@ -29,7 +29,10 @@ export default function TriplexGridFinder() {
         if (xVal >= 1 && xVal <= 99) {
             try {
                 return calculateColumnMajor(xVal);
-            } catch (e) { return null; }
+            } catch {
+                // แก้ไข 2: ลบ (e) ออก เพราะไม่ได้ใช้งาน
+                return null;
+            }
         }
         return null;
     }, [slotX]);
@@ -69,7 +72,6 @@ export default function TriplexGridFinder() {
 
                     <div className="flex flex-col sm:flex-row items-center gap-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
                         <div className="w-full sm:w-1/2">
-                            {/* แก้ไข: เพิ่ม htmlFor และ id */}
                             <label htmlFor="inputSlotX" className="block text-sm font-medium text-gray-600 mb-1">ใส่เลขลำดับช่อง (1-99)</label>
                             <input
                                 id="inputSlotX"
@@ -85,11 +87,19 @@ export default function TriplexGridFinder() {
                         <div className="w-full sm:w-1/2 text-center">
                             {columnMajorPosition ? (
                                 <div className="animate-fadeIn">
-                                    <p className="text-gray-500 text-sm">ผลลัพธ์ตำแหน่ง</p>
-                                    <div className="text-2xl font-extrabold text-blue-600">
+                                    <p className="text-gray-500 text-sm mb-1">ตำแหน่งของคุณคือ</p>
+
+                                    <div className="text-3xl font-extrabold text-blue-600">
                                         R{columnMajorPosition.row} <span className="text-gray-300 mx-1">|</span> C{columnMajorPosition.column}
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-1">Slot Index: {columnMajorPosition.slotIndex}</p>
+
+                                    <div className="mt-3 p-2 bg-white border border-blue-100 rounded-md shadow-sm">
+                                        <p className="text-lg text-gray-800 font-bold">
+                                            {getVariableName(columnMajorPosition.row, columnMajorPosition.column)}
+                                        </p>
+                                    </div>
+
+                                    <p className="text-xs text-gray-400 mt-2">Slot Index: {columnMajorPosition.slotIndex}</p>
                                 </div>
                             ) : (
                                 <p className="text-red-400 text-sm italic">กรุณาใส่เลข 1-99</p>
@@ -107,7 +117,6 @@ export default function TriplexGridFinder() {
                     </div>
 
                     <div className="bg-green-50 p-4 rounded-lg border border-green-100 space-y-4">
-                        {/* แก้ไข: ส่ง prop 'id' เข้าไปใน Component ย่อย */}
                         <div className="grid grid-cols-3 gap-3">
                             <InputNumber id="inputR1" label="ค่าตั้งต้น R1" value={startR1} setter={setStartR1} />
                             <InputNumber id="inputR2" label="ค่าตั้งต้น R2" value={startR2} setter={setStartR2} />
@@ -117,7 +126,6 @@ export default function TriplexGridFinder() {
                         <hr className="border-green-200" />
 
                         <div>
-                            {/* แก้ไข: เพิ่ม htmlFor และ id ให้ Select */}
                             <label htmlFor="selectTargetValue" className="block text-sm font-medium text-gray-700 mb-1">เลือกตัวเลขเป้าหมาย (V)</label>
                             <div className="flex gap-3">
                                 <select
@@ -127,7 +135,6 @@ export default function TriplexGridFinder() {
                                         setTargetValue(parseInt(e.target.value));
                                         setShowInverseResult(false);
                                     }}
-                                    // เพิ่ม text-gray-900 เพื่อแก้เรื่องสีตัวอักษรด้วย
                                     className="block w-full border-gray-300 rounded-md shadow-sm p-2 text-lg font-bold text-center bg-white text-gray-900"
                                 >
                                     {[1, 2, 3, 4, 5, 6, 7].map((v) => (
@@ -169,8 +176,15 @@ export default function TriplexGridFinder() {
     );
 }
 
-// แก้ไข: Sub-component รับ prop 'id' และเชื่อม htmlFor
-const InputNumber = ({ id, label, value, setter }: { id: string, label: string, value: number | '', setter: any }) => (
+// แก้ไข 1: กำหนด Type ให้ Props อย่างถูกต้อง
+interface InputNumberProps {
+    id: string;
+    label: string;
+    value: number | '';
+    setter: (value: number | '') => void;
+}
+
+const InputNumber = ({ id, label, value, setter }: InputNumberProps) => (
     <div className="text-center">
         <label htmlFor={id} className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
         <input
