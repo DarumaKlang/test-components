@@ -8,8 +8,6 @@ import {
     calculateColumnMajor,
 } from '@/lib/grid-calculator';
 import { VariableMap } from '@/data/grid-variables';
-// นำเข้า Type StrategyContent เพิ่มเติม เพื่อให้ TS รู้จักโครงสร้างข้อมูล
-import { StrategyDescriptionMap, StrategyContent } from '@/data/strategy-descriptions';
 
 // ค่าเริ่มต้น
 const INITIAL_START_R1 = 1;
@@ -31,9 +29,6 @@ export default function TriplexGridFinder() {
     // State Mode 2
     const [targetValue, setTargetValue] = useState<number>(INITIAL_TARGET_VALUE);
     const [showInverseResult, setShowInverseResult] = useState(false);
-
-    // State Modal (Popup คำทำนาย)
-    const [modalContent, setModalContent] = useState<{ title: string; description: string } | null>(null);
 
     // Logic 1
     const columnMajorPosition = useMemo(() => {
@@ -67,60 +62,8 @@ export default function TriplexGridFinder() {
         return VariableMap[`R${row}C${column}`] || '-';
     };
 
-    // --- ฟังก์ชันเปิด Popup (จุดที่แก้ไข) ---
-    const openPrediction = (row: number, column: number) => {
-        const key = `R${row}C${column}`;
-        const variableName = VariableMap[key] || 'ไม่ระบุชื่อ';
-        const title = variableName.split('/')[0].trim();
-
-        // ดึงข้อมูล (ซึ่งตอนนี้เป็น Object หรือ undefined)
-        const content: StrategyContent | undefined = StrategyDescriptionMap[key];
-
-        // ดึงเฉพาะ field 'short' ออกมา ถ้าไม่มีให้ใช้ข้อความ default
-        const description = content ? content.short : 'ไม่มีข้อมูลคำทำนาย';
-
-        setModalContent({ title: `${title} (R${row}C${column})`, description });
-    };
-
     return (
-        <div className="max-w-6xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100 font-sans mb-10 relative">
-
-            {/* --- Modal / Popup Area --- */}
-            {modalContent && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={() => setModalContent(null)}>
-                    <div
-                        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative transform transition-all scale-100"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <button
-                            onClick={() => setModalContent(null)}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-                            aria-label="Close modal"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-
-                        <h3 className="text-xl font-bold text-slate-800 mb-4 pr-8 border-b pb-2">
-                            {modalContent.title}
-                        </h3>
-                        <div className="text-gray-700 text-base leading-relaxed whitespace-pre-wrap max-h-[60vh] overflow-y-auto">
-                            {modalContent.description}
-                        </div>
-
-                        <div className="mt-6 text-right">
-                            <button
-                                onClick={() => setModalContent(null)}
-                                className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 font-medium transition-colors"
-                            >
-                                ปิดหน้าต่าง
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
+        <div className="max-w-6xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100 font-sans mb-10">
             <div className="bg-slate-800 text-white p-4 text-center">
                 <h2 className="text-xl font-bold">ระบบคำนวณตำแหน่งพิชัยสงคราม (Triplex Grid)</h2>
             </div>
@@ -157,16 +100,11 @@ export default function TriplexGridFinder() {
                                             R{columnMajorPosition.row}<span className="text-gray-300 text-2xl mx-1">/</span>C{columnMajorPosition.column}
                                         </div>
                                     </div>
-
-                                    <button
-                                        onClick={() => openPrediction(columnMajorPosition.row, columnMajorPosition.column)}
-                                        className="p-3 bg-white border border-blue-100 rounded-lg shadow-sm inline-block hover:shadow-md hover:border-blue-300 transition-all cursor-pointer text-left w-full sm:w-auto"
-                                    >
-                                        <p className="text-lg text-gray-800 font-bold flex items-center gap-2">
+                                    <div className="p-3 bg-white border border-blue-100 rounded-lg shadow-sm inline-block">
+                                        <p className="text-lg text-gray-800 font-bold">
                                             {getVariableName(columnMajorPosition.row, columnMajorPosition.column)}
-                                            <span className="text-blue-500 text-xs bg-blue-50 px-2 py-1 rounded-full border border-blue-100">ดูคำทำนาย</span>
                                         </p>
-                                    </button>
+                                    </div>
                                 </div>
                             ) : (
                                 <p className="text-red-400 text-sm italic">กรุณาใส่เลข 1-99</p>
@@ -228,39 +166,29 @@ export default function TriplexGridFinder() {
 
                         {showInverseResult && finalValueResults.length > 0 && (
                             <div className="mt-4 space-y-2 animate-fadeIn bg-green-50 p-4 rounded-lg">
-                                <p className="text-sm font-semibold text-gray-600 mb-2">คลิกที่ผลลัพธ์เพื่อดูคำทำนาย:</p>
+                                <p className="text-sm font-semibold text-gray-600">ผลลัพธ์สำหรับเลข {targetValue}:</p>
                                 {finalValueResults.map((pos, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => openPrediction(pos.row, pos.column)}
-                                        className="w-full flex items-center justify-between bg-white border border-green-200 p-3 rounded shadow-sm hover:shadow-md hover:bg-green-50 transition-all mb-2 cursor-pointer text-left group"
-                                    >
+                                    <div key={idx} className="flex items-center justify-between bg-white border border-green-200 p-2 rounded shadow-sm">
                                         <div className="flex items-center gap-3">
                                             <span className="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-xs">R{pos.row}</span>
-                                            <span className="text-gray-800 font-bold text-lg">C{pos.column}</span>
+                                            <span className="text-gray-800 font-bold">C{pos.column}</span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm text-gray-600 truncate max-w-[150px] sm:max-w-none group-hover:text-green-700">
-                                                {getVariableName(pos.row, pos.column)}
-                                            </span>
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 group-hover:text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </div>
-                                    </button>
+                                        <span className="text-xs text-gray-500 text-right truncate max-w-[150px] sm:max-w-none">
+                                            {getVariableName(pos.row, pos.column)}
+                                        </span>
+                                    </div>
                                 ))}
                             </div>
                         )}
                     </div>
                 </section>
 
-                {/* MODE 3 */}
+                {/* MODE 3: ตาราง Grid (อัปเดตใหม่) */}
                 <section>
                     <div className="flex items-center gap-2 mb-4 text-purple-800 border-b pb-2 border-purple-100">
                         <span className="bg-purple-100 text-purple-800 font-bold px-2 py-1 rounded text-sm">MODE 3</span>
                         <h3 className="font-bold text-lg">ตารางภาพรวม (Grid View)</h3>
                     </div>
-                    <p className="text-sm text-gray-500 mb-2">* คลิกที่ช่องตารางเพื่อดูคำทำนาย</p>
 
                     <div className="overflow-x-auto pb-2">
                         <div className="min-w-[800px] bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -290,18 +218,17 @@ export default function TriplexGridFinder() {
                                     {[1, 2, 3, 4, 5, 6, 7].map(col => {
                                         const val = getGridValue(row.start, col);
                                         const rawVariableName = getVariableName(row.rowId, col);
+                                        // แยกข้อความด้วย '/' และตัดช่องว่างออก
                                         const variableLines = rawVariableName.split('/').map(s => s.trim());
 
                                         return (
-                                            <div
-                                                key={col}
-                                                onClick={() => openPrediction(row.rowId, col)}
-                                                className="p-1 text-center border-r border-gray-100 last:border-r-0 flex flex-col items-center justify-start pt-3 cursor-pointer hover:bg-yellow-50 active:bg-yellow-100 transition-colors group"
-                                            >
-                                                <div className="mb-2 w-7 h-7 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center text-base font-extrabold text-gray-800 shadow-sm border border-gray-200 group-hover:border-yellow-200 group-hover:text-yellow-700 transition-all">
+                                            <div key={col} className="p-1 text-center border-r border-gray-100 last:border-r-0 flex flex-col items-center justify-start pt-3">
+                                                {/* ตัวเลขค่าผลลัพธ์ */}
+                                                <div className="mb-2 w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-base font-extrabold text-gray-800 shadow-sm border border-gray-200">
                                                     {val}
                                                 </div>
 
+                                                {/* ชื่อตัวแปร แยกบรรทัด */}
                                                 <div className="flex flex-col gap-0.5 w-full">
                                                     {variableLines.map((line, idx) => (
                                                         <div key={idx} className="text-[10px] leading-tight text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis px-1">
