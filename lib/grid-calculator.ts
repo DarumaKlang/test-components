@@ -1,4 +1,4 @@
-// lib/grid-calculator.ts
+// lib/grid-calculator.ts (ฉบับแก้ไข: เพิ่ม export ที่ถูกต้อง)
 
 // 1. ค่าคงที่
 const TOTAL_SLOTS = 21; 
@@ -7,17 +7,17 @@ const COLUMNS = 7;
 
 // 2. Interface Definition
 export interface GridPosition {
-    row: number;      // แถว (R: 1-3)
-    column: number;   // คอลัมน์ (C: 1-7)
-    slotIndex: number;// ลำดับช่องในรอบ 1-21
+    row: number;      
+    column: number;   
+    slotIndex: number;
 }
 
 export interface TriplexResult extends GridPosition {
-    finalValue: number; // ค่าตัวเลขสุดท้าย (V: 1-7)
+    finalValue: number; 
 }
 
 // ----------------------------------------------------------------------
-// A. ฟังก์ชันหลัก (Function 1): หาตำแหน่ง R และ C จากลำดับ X (Column-Major)
+// A. Function 1: หาตำแหน่ง R และ C จากลำดับ X (Column-Major)
 // ----------------------------------------------------------------------
 export function calculateColumnMajor(X: number): GridPosition {
     if (X <= 0) {
@@ -26,30 +26,25 @@ export function calculateColumnMajor(X: number): GridPosition {
   
     const zeroBasedIndex = (X - 1) % TOTAL_SLOTS;
     const slotIndex = zeroBasedIndex + 1;
-  
-    // Row: (index % ROWS) + 1
     const row = (zeroBasedIndex % ROWS) + 1;
-  
-    // Column: floor(index / ROWS) + 1
     const column = Math.floor(zeroBasedIndex / ROWS) + 1;
   
     return { row, column, slotIndex };
 }
 
 // ----------------------------------------------------------------------
-// B. Forward Logic: หาค่า V เมื่อรู้ตำแหน่ง (ใช้ในอนาคต)
+// B. Forward Logic: หาค่า V เมื่อรู้ตำแหน่งและค่าตั้งต้น (แก้ไข Error 2305)
 // ----------------------------------------------------------------------
-export function calculateTriplexGridValue(
-    startR1: number,
-    startR2: number,
-    startR3: number,
-    X: number
+export function calculateFinalValue(
+    row: number, 
+    column: number, 
+    startR1: number, 
+    startR2: number, 
+    startR3: number
 ): TriplexResult {
-  
-    const position = calculateColumnMajor(X);
-    const { row, column } = position;
-    
+    const position = { row, column, slotIndex: 0 }; 
     let startValue: number;
+
     switch (row) {
         case 1: startValue = startR1; break;
         case 2: startValue = startR2; break;
@@ -57,9 +52,8 @@ export function calculateTriplexGridValue(
         default: throw new Error("Internal row calculation error."); 
     }
   
-    // Logic Clean Version: ((Start + Col - 2) % 7 + 7) % 7 + 1
     const rawValue = startValue + column - 2;
-    const V = ((rawValue % COLUMNS) + COLUMNS) % COLUMNS + 1;
+    const V = ((rawValue % COLUMNS) + COLUMNS) % COLUMNS + 1; 
   
     return { ...position, finalValue: V };
 }
@@ -83,19 +77,15 @@ export function findPositionByFinalValue(
   
     for (let row = 1; row <= ROWS; row++) {
         const start = startMap[row - 1]; 
-        
-        // 1. คำนวณผลต่างการเลื่อน D
         const difference = finalValue - start;
         const D = ((difference % COLUMNS) + COLUMNS) % COLUMNS; 
+        const column = D + 1;
         
-        // 2. คำนวณ Column C
-        const column = D + 1; 
-        
-        // 3. คำนวณ Slot Index
-        const slotIndex = (column - 1) * ROWS + row;
-        
-        results.push({ row, column, slotIndex });
+        if (column >= 1 && column <= COLUMNS) {
+            const slotIndex = row + ROWS * (column - 1);
+            results.push({ row, column, slotIndex });
+        }
     }
-  
+
     return results;
 }

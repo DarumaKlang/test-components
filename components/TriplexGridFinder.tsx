@@ -8,25 +8,33 @@ import {
     calculateColumnMajor,
 } from '@/lib/grid-calculator';
 import { VariableMap } from '@/data/grid-variables';
-// นำเข้า Type StrategyContent เพิ่มเติม เพื่อให้ TS รู้จักโครงสร้างข้อมูล
 import { StrategyDescriptionMap, StrategyContent } from '@/data/strategy-descriptions';
 
 // ค่าเริ่มต้น
-const INITIAL_START_R1 = 1;
-const INITIAL_START_R2 = 1;
-const INITIAL_START_R3 = 1;
-const INITIAL_TARGET_VALUE = 1;
 const INITIAL_SLOT_X = 12;
+const INITIAL_TARGET_VALUE = 1;
 
-export default function TriplexGridFinder() {
+// Interface สำหรับ Props ที่รับค่าตั้งต้นและ Setter จาก Parent
+export interface TriplexGridFinderProps {
+    startR1: number | '';
+    setStartR1: (value: number | '') => void;
+    startR2: number | '';
+    setStartR2: (value: number | '') => void;
+    startR3: number | '';
+    setStartR3: (value: number | '') => void;
+}
+
+export default function TriplexGridFinder({
+    startR1,
+    setStartR1,
+    startR2,
+    setStartR2,
+    startR3,
+    setStartR3,
+}: TriplexGridFinderProps) {
 
     // State Mode 1
     const [slotX, setSlotX] = useState<number | ''>(INITIAL_SLOT_X);
-
-    // State Shared
-    const [startR1, setStartR1] = useState<number | ''>(INITIAL_START_R1);
-    const [startR2, setStartR2] = useState<number | ''>(INITIAL_START_R2);
-    const [startR3, setStartR3] = useState<number | ''>(INITIAL_START_R3);
 
     // State Mode 2
     const [targetValue, setTargetValue] = useState<number>(INITIAL_TARGET_VALUE);
@@ -35,7 +43,7 @@ export default function TriplexGridFinder() {
     // State Modal (Popup คำทำนาย)
     const [modalContent, setModalContent] = useState<{ title: string; description: string } | null>(null);
 
-    // Logic 1
+    // Logic 1: หาตำแหน่งจากลำดับ X
     const columnMajorPosition = useMemo(() => {
         const xVal = Number(slotX);
         if (xVal >= 1 && xVal <= 99) {
@@ -46,13 +54,16 @@ export default function TriplexGridFinder() {
         return null;
     }, [slotX]);
 
-    // Logic 2
+    // Logic 2: หาตำแหน่งจากค่า V (ใช้ค่า startR จาก Props)
     const finalValueResults = useMemo(() => {
         if (!showInverseResult) return [];
         const r1 = Number(startR1);
         const r2 = Number(startR2);
         const r3 = Number(startR3);
+        
+        // ตรวจสอบว่ามีค่าครบหรือไม่
         if (!r1 || !r2 || !r3 || !targetValue) return [];
+        
         return findPositionByFinalValue(r1, r2, r3, targetValue);
     }, [startR1, startR2, startR3, targetValue, showInverseResult]);
 
@@ -67,18 +78,12 @@ export default function TriplexGridFinder() {
         return VariableMap[`R${row}C${column}`] || '-';
     };
 
-    // --- ฟังก์ชันเปิด Popup (จุดที่แก้ไข) ---
     const openPrediction = (row: number, column: number) => {
         const key = `R${row}C${column}`;
         const variableName = VariableMap[key] || 'ไม่ระบุชื่อ';
         const title = variableName.split('/')[0].trim();
-
-        // ดึงข้อมูล (ซึ่งตอนนี้เป็น Object หรือ undefined)
         const content: StrategyContent | undefined = StrategyDescriptionMap[key];
-
-        // ดึงเฉพาะ field 'short' ออกมา ถ้าไม่มีให้ใช้ข้อความ default
         const description = content ? content.short : 'ไม่มีข้อมูลคำทำนาย';
-
         setModalContent({ title: `${title} (R${row}C${column})`, description });
     };
 
@@ -178,11 +183,11 @@ export default function TriplexGridFinder() {
                 {/* Divider */}
                 <div className="border-t border-gray-100"></div>
 
-                {/* SHARED SETTINGS */}
+                {/* SHARED SETTINGS (ตอนนี้รับค่าจาก Props) */}
                 <section className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                     <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
                         ตั้งค่าเริ่มต้น (Configuration)
-                        <span className="text-xs font-normal text-gray-500 ml-2">(ใช้สำหรับ Mode 2 และ 3)</span>
+                        <span className="text-xs font-normal text-gray-500 ml-2">(เลือกได้เฉพาะ 1-7)</span>
                     </h3>
                     <div className="grid grid-cols-3 gap-4">
                         <InputNumber id="inputR1" label="ค่าตั้งต้น R1" value={startR1} setter={setStartR1} />
@@ -209,7 +214,7 @@ export default function TriplexGridFinder() {
                                         setTargetValue(parseInt(e.target.value));
                                         setShowInverseResult(false);
                                     }}
-                                    className="block w-full border-gray-300 rounded-md shadow-sm p-2 text-lg font-bold text-center bg-white text-gray-900 border"
+                                    className="block w-full border-gray-300 rounded-md shadow-sm p-2 text-lg font-bold text-center bg-white text-gray-900 border cursor-pointer hover:bg-gray-50"
                                 >
                                     {[1, 2, 3, 4, 5, 6, 7].map((v) => (
                                         <option key={v} value={v}>{v}</option>
@@ -260,7 +265,7 @@ export default function TriplexGridFinder() {
                         <span className="bg-purple-100 text-purple-800 font-bold px-2 py-1 rounded text-sm">MODE 3</span>
                         <h3 className="font-bold text-lg">ตารางภาพรวม (Grid View)</h3>
                     </div>
-                    <p className="text-sm text-gray-500 mb-2">* คลิกที่ช่องตารางเพื่อดูคำทำนาย</p>
+                    <p className="text-sm text-gray-500 mb-2">* คลิกที่ช่องตารางเพื่อดูคำทำนาย (ค่าจะอัพเดทตามตารางสรุปด้านล่าง)</p>
 
                     <div className="overflow-x-auto pb-2">
                         <div className="min-w-[800px] bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -323,6 +328,7 @@ export default function TriplexGridFinder() {
     );
 }
 
+// 🆕 Helper Component: InputNumber (เปลี่ยนเป็น Select Dropdown)
 interface InputNumberProps {
     id: string;
     label: string;
@@ -333,12 +339,25 @@ interface InputNumberProps {
 const InputNumber = ({ id, label, value, setter }: InputNumberProps) => (
     <div className="text-center bg-white p-3 rounded-lg shadow-sm border border-gray-100">
         <label htmlFor={id} className="block text-xs font-medium text-gray-500 mb-2">{label}</label>
-        <input
-            id={id}
-            type="number" min="1" max="7"
-            value={value}
-            onChange={(e) => setter(e.target.value === '' ? '' : parseInt(e.target.value))}
-            className="w-full border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 p-2 text-center text-xl font-bold text-gray-900"
-        />
+        <div className="relative">
+            <select
+                id={id}
+                value={value}
+                onChange={(e) => setter(parseInt(e.target.value))}
+                className="w-full border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500 p-2 text-center text-xl font-bold text-gray-900 appearance-none cursor-pointer hover:bg-gray-50 transition-colors"
+            >
+                {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                    <option key={num} value={num}>
+                        {num}
+                    </option>
+                ))}
+            </select>
+            {/* ลูกศร Dropdown แบบ Custom เพื่อความสวยงาม */}
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                </svg>
+            </div>
+        </div>
     </div>
 );
